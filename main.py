@@ -28,13 +28,13 @@ while True:
         win_main_lay = [
                         [sg.Text('Название БД:  '),
                         sg.Input(size=(30, None)),sg.FileBrowse('Выбрать БД',key='BD_NAME',file_types=(("База sqlite", "*.*"),)), sg.Button('Подключиться')],
-                        [sg.Text('Вопрос:'), sg.Input(key='answer' ,size=(66, None))],
-                        [sg.Text('Создать ответы')],
-                        [sg.Input(key='1_answer',size=(16, None)),t_p,sg.Input(key='2_answer',size=(16, None)),t_p,sg.Input(key='3_answer',size=(16, None)),t_p,sg.Input(key='4_answer',size=(16, None))],
-                        [sg.Button('Создать')],
                         [sg.Text('Название предмета'),
                         sg.Combo(('Выберете предмет',item),key='item',readonly=True, size=(20, 1)),
                         sg.Button('Выбрать предмет')],
+                        [sg.Text('Вопрос:'), sg.Input(key='answer' ,size=(66, None))],
+                        [sg.Text('Создать ответы')],
+                        [sg.Input(key='answer_1',size=(16, None)),t_p,sg.Input(key='answer_2',size=(16, None)),t_p,sg.Input(key='answer_3',size=(16, None)),t_p,sg.Input(key='answer_4',size=(16, None))],
+                        [sg.Button('Создать')],
                         [sg.Text('Редактирование ответов:')],
                         [sg.Text('Неправильный ответ  '), sg.Text('  Правильный ответ')],
                         [sg.Input(key='wrong_answer',size=(16, None)), sg.Text('   '),sg.Input(key='ok_answer',size=(16, None)),sg.Button('Редактировать')],
@@ -46,7 +46,6 @@ while True:
         while True:
             # ПЕРЕМЕННЫЕ
             button_main, values_main = window_main.Read(timeout=100)
-            answer = values_main['answer']
 
             # НАЖАТИЕ НА КНОПКУ 'Подключиться'
             if button_main == 'Подключиться':
@@ -59,9 +58,25 @@ while True:
                 window_main.FindElement('item').Update(values=item)
                 print("Подключился к бд вывел, список предметов:" + str(item))
 
+            if button_main == 'Выбрать предмет':
+                item = values_main['item']
+
             if button_main == 'Создать':
-                item = values_main ['item']
-                print(item)
+                answer = values_main['answer']
+                answer_1 = values_main['answer_1']
+                answer_2 = values_main['answer_2']
+                answer_3 = values_main['answer_3']
+                answer_4 = values_main['answer_4']
+                # ЗАПРОС К БД НА СОЗДАНИЕ ВОПРОСА С ОТВЕТАМИ
+                request_answer =    [
+                            (item,answer , answer_1),
+                            (item, answer, answer_2),
+                            (item, answer, answer_3),
+                            (item, answer, answer_4)
+                                    ]
+
+                cursor.executemany("INSERT INTO items VALUES (?,?,?)", request_answer)
+                conn.commit()
 
             if button_main is None or button_main == 'Выход':
                 quit()
