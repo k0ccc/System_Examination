@@ -3,7 +3,9 @@ import sqlite3
 
 # ПЕРЕМЕННЫЕ
 password_static = ''
-item = []
+item = ['Выберете предмет или добавте его']
+question = ['Выберете неправильный ответ']
+delete_question = ['Выберете ответ который надо удалить']
 window_main_bool = False
 
 login = [[sg.Text('Пароль?', font='Colibri 15')],
@@ -29,17 +31,16 @@ while True:
                         [sg.Text('Название БД:  '),
                         sg.Input(size=(30, None)),sg.FileBrowse('Выбрать БД',key='BD_NAME',file_types=(("База sqlite", "*.*"),)), sg.Button('Подключиться')],
                         [sg.Text('Название предмета'),
-                        sg.Combo(('Выберете предмет',item),key='item',readonly=True, size=(20, 1)),
-                        sg.Button('Выбрать предмет')],
+                        sg.Combo((item),key='item',size=(30, 1)),sg.Button('Выбрать предмет или добавить')],
                         [sg.Text('Вопрос:'), sg.Input(key='answer' ,size=(66, None))],
                         [sg.Text('Создать ответы')],
                         [sg.Input(key='answer_1',size=(16, None)),t_p,sg.Input(key='answer_2',size=(16, None)),t_p,sg.Input(key='answer_3',size=(16, None)),t_p,sg.Input(key='answer_4',size=(16, None))],
                         [sg.Button('Создать')],
                         [sg.Text('Редактирование ответов:')],
-                        [sg.Text('Неправильный ответ  '), sg.Text('  Правильный ответ')],
-                        [sg.Input(key='wrong_answer',size=(16, None)), sg.Text('   '),sg.Input(key='ok_answer',size=(16, None)),sg.Button('Редактировать')],
+                        [sg.Text('Неправильный ответ                      '), sg.Text('  Правильный ответ')],
+                        [sg.Combo((question),key='wrong_answer',size=(30, None)), sg.Text('   '),sg.Input(key='ok_answer',size=(25, None)),sg.Button('Редактировать')],
                         [sg.Text('Удалить ответ')],
-                        [sg.Input(key='delete_anwser'),sg.Button('Удалить'), sg.Text('                     '),
+                        [sg.Combo((delete_question),key='delete_question'),sg.Button('Удалить'), sg.Text('                     '),
                         sg.Button('Выход')]
                         ]
         window_main = sg.Window('Test',win_main_lay)
@@ -58,7 +59,16 @@ while True:
                 window_main.FindElement('item').Update(values=item)
                 print("Подключился к бд вывел, список предметов:" + str(item))
 
-            if button_main == 'Выбрать предмет':
+                # ПОИСК ОТВЕТОВ ДЛЯ "Редактирование ответов"
+                cursor.execute("SELECT question FROM items")
+                question = cursor.fetchall()
+                window_main.FindElement('wrong_answer').Update(values=question)
+                # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
+                cursor.execute('SELECT question FROM items')
+                question = cursor.fetchall()
+                window_main.FindElement('delete_question').Update(values=question)
+
+            if button_main == 'Выбрать предмет или добавить':
                 item = values_main['item']
 
             if button_main == 'Создать':
@@ -68,15 +78,66 @@ while True:
                 answer_3 = values_main['answer_3']
                 answer_4 = values_main['answer_4']
                 # ЗАПРОС К БД НА СОЗДАНИЕ ВОПРОСА С ОТВЕТАМИ
-                request_answer =    [
-                            (item,answer , answer_1),
-                            (item, answer, answer_2),
-                            (item, answer, answer_3),
-                            (item, answer, answer_4)
+                if answer_1 == '':
+                    pass
+                if answer_2 == '':
+                    request_answer =    [
+                                (str(item), str(answer), str(answer_1))]
+                elif answer_3 == '':
+                    request_answer =    [
+                                (str(item), str(answer), str(answer_1)),
+                                (str(item), str(answer), str(answer_2))]
+                elif answer_4 == '':
+                    request_answer =    [
+                                (str(item), str(answer), str(answer_1)),
+                                (str(item), str(answer), str(answer_2)),
+                                (str(item), str(answer), str(answer_3))]
+                else:
+                    request_answer =    [
+                                (str(item), str(answer), str(answer_1)),
+                                (str(item), str(answer), str(answer_2)),
+                                (str(item), str(answer), str(answer_3)),
+                                (str(item), str(answer), str(answer_4))
                                     ]
 
                 cursor.executemany("INSERT INTO items VALUES (?,?,?)", request_answer)
                 conn.commit()
+
+                # ПОИСК ОТВЕТОВ ДЛЯ "Редактирование ответов"
+                cursor.execute("SELECT question FROM items")
+                question = cursor.fetchall()
+                window_main.FindElement('wrong_answer').Update(values=question)
+                # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
+                window_main.FindElement('delete_question').Update(values=question)
+            # НАЖАТИЕ НА КНОПКУ 'Редактировать'
+            if button_main == 'Редактировать':
+                # ОПРЕДЕЛЕНИЕ ПЕРЕМЕННЫХ
+                wrong_answer = values_main['wrong_answer']
+                ok_answer = values_main['ok_answer']
+                # ЗАПРОС НА ЗАМЕНУ ОТВЕТОВ
+                request_edit = [str(ok_answer),str(wrong_answer)]
+                cursor.executemany("UPDATE items SET question = (?) WHERE question = (?)",(request_edit,))
+                conn.commit()
+
+                # ПОИСК ОТВЕТОВ ДЛЯ "Редактирование ответов"
+                cursor.execute("SELECT question FROM items")
+                question = cursor.fetchall()
+                window_main.FindElement('wrong_answer').Update(values=question)
+                # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
+                window_main.FindElement('delete_question').Update(values=question)
+            # ЗАПРОС НА УДАЛЕНИЕ ОТВЕТА
+            if button_main == 'Удалить':
+                delete_question1 = values_main['delete_question']
+                request_delete =[str(delete_question1)]
+                cursor.executemany("DELETE FROM items WHERE question = (?)", (request_delete,))
+                conn.commit()
+
+                # ПОИСК ОТВЕТОВ ДЛЯ "Редактирование ответов"
+                cursor.execute("SELECT question FROM items")
+                question = cursor.fetchall()
+                window_main.FindElement('wrong_answer').Update(values=question)
+                # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
+                window_main.FindElement('delete_question').Update(values=question)
 
             if button_main is None or button_main == 'Выход':
                 quit()
