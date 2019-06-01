@@ -7,7 +7,7 @@ item = ['Выберете предмет или добавте его']
 question = ['Выберете неправильный ответ']
 delete_question = ['Выберете ответ который надо удалить']
 window_main_bool = False
-
+# Инетерфейс пороля
 login = [[sg.Text('Пароль?', font='Colibri 15')],
         [sg.Input(key='password',password_char='*', font='Colibri 15',size=(15, None))],
         [sg.Button('Ок'),sg.Button('Выход')]
@@ -16,15 +16,18 @@ login = [[sg.Text('Пароль?', font='Colibri 15')],
 window_pas = sg.Window('Вход',login)
 
 while True:
+    # Чтение конпок и полей
     button_pas, values_pas = window_pas.Read()
-
+    # Нажатие на кнопку выход
     if button_pas is None or button_pas == 'Выход':
         break
     password = values_pas['password']
+    # Сравнение пароля с паролем записаным в программе и нажатие кнопки "Ок"
     if password == password_static and button_pas == 'Ок' and not window_main_bool:
-
+        # Скрытие окна с паролем
         window_pas.Hide()
         window_main_bool = True
+        # Переменная
         t_p = sg.Text('*')
         # ИНТЕРФЕЙС 2 ОКНА ПОСЛЕ ПОРОЛЯ
         win_main_lay = [
@@ -45,7 +48,7 @@ while True:
                         ]
         window_main = sg.Window('Test',win_main_lay)
         while True:
-            # ПЕРЕМЕННЫЕ
+            # Чтение конпок и полей
             button_main, values_main = window_main.Read(timeout=100)
 
             # НАЖАТИЕ НА КНОПКУ 'Подключиться'
@@ -54,30 +57,30 @@ while True:
                 BD_NAME = values_main['BD_NAME']
                 conn = sqlite3.connect(BD_NAME)
                 cursor = conn.cursor()
+                # Запрос на вывод всех предметов из БД
                 cursor.execute("SELECT DISTINCT item FROM items")
+                # Присваивание всех предметов item
                 item = cursor.fetchall()
+                # Обновление поля "Выберете предмет или добавте его"
                 window_main.FindElement('item').Update(values=item)
-                print("Подключился к бд вывел, список предметов:" + str(item))
 
-                # ПОИСК ОТВЕТОВ ДЛЯ "Редактирование ответов"
+                # ПОИСК ОТВЕТОВ ДЛЯ "неправильного ответа ответов"
                 cursor.execute("SELECT question FROM items")
                 question = cursor.fetchall()
                 window_main.FindElement('wrong_answer').Update(values=question)
                 # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
-                cursor.execute('SELECT question FROM items')
-                question = cursor.fetchall()
                 window_main.FindElement('delete_question').Update(values=question)
-
+            # НАЖАТИЕ НА КНОПКУ 'Выбрать предмет или добавить'
             if button_main == 'Выбрать предмет или добавить':
                 item = values_main['item']
-
+            # НАЖАТИЕ НА КНОПКУ 'Создать'
             if button_main == 'Создать':
                 answer = values_main['answer']
                 answer_1 = values_main['answer_1']
                 answer_2 = values_main['answer_2']
                 answer_3 = values_main['answer_3']
                 answer_4 = values_main['answer_4']
-                # ЗАПРОС К БД НА СОЗДАНИЕ ВОПРОСА С ОТВЕТАМИ
+                # Проверка на пустые поля
                 if answer_1 == '':
                     pass
                 if answer_2 == '':
@@ -99,8 +102,8 @@ while True:
                                 (str(item), str(answer), str(answer_3)),
                                 (str(item), str(answer), str(answer_4))
                                     ]
-
-                cursor.executemany("INSERT INTO items VALUES (?,?,?)", request_answer)
+                # ЗАПРОС К БД НА СОЗДАНИЕ ВОПРОСА С ОТВЕТАМИ
+                cursor.executemany("INSERT INTO items VALUES (?,?,?)", (request_answer,))
                 conn.commit()
 
                 # ПОИСК ОТВЕТОВ ДЛЯ "Редактирование ответов"
@@ -138,7 +141,7 @@ while True:
                 window_main.FindElement('wrong_answer').Update(values=question)
                 # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
                 window_main.FindElement('delete_question').Update(values=question)
-
+            # КНОПКА ВЫХОДА
             if button_main is None or button_main == 'Выход':
                 quit()
                 break
