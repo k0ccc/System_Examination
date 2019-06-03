@@ -83,7 +83,7 @@ while True:
                 # Проверка на пустые поля
                 if answer_1 == '':
                     pass
-                if answer_2 == '':
+                elif answer_2 == '':
                     request_answer =    [
                                 (str(item), str(answer), str(answer_1))]
                 elif answer_3 == '':
@@ -101,9 +101,9 @@ while True:
                                 (str(item), str(answer), str(answer_2)),
                                 (str(item), str(answer), str(answer_3)),
                                 (str(item), str(answer), str(answer_4))
-                                    ]
+                                        ]
                 # ЗАПРОС К БД НА СОЗДАНИЕ ВОПРОСА С ОТВЕТАМИ
-                cursor.executemany("INSERT INTO items VALUES (?,?,?)", (request_answer,))
+                cursor.executemany("INSERT INTO items VALUES (?,?,?)", (request_answer))
                 conn.commit()
 
                 # ПОИСК ОТВЕТОВ ДЛЯ "Редактирование ответов"
