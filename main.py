@@ -1,8 +1,14 @@
 import PySimpleGUI as sg
 import sqlite3
+from xlwt import *
+import os
 
 # ПЕРЕМЕННЫЕ
+# для создания листов в .xls
+f = 0
+# пароль для входа
 password_static = ''
+w = Workbook()
 item = ['Выберете предмет или добавте его']
 question = ['Выберете неправильный ответ']
 delete_question = ['Выберете ответ который надо удалить']
@@ -32,18 +38,34 @@ while True:
         # ИНТЕРФЕЙС 2 ОКНА ПОСЛЕ ПОРОЛЯ
         win_main_lay = [
                         [sg.Text('Название БД:  '),
-                        sg.Input(size=(30, None)),sg.FileBrowse('Выбрать БД',key='BD_NAME',file_types=(("База sqlite", "*.*"),)), sg.Button('Подключиться')],
+                        sg.Input(size=(30, 1)),
+                        sg.FileBrowse('Выбрать БД',key='BD_NAME',
+                        file_types=( ("База sqlite", "*.*"),)),
+                        sg.Button('Подключиться')],
                         [sg.Text('Название предмета'),
-                        sg.Combo((item),key='item',size=(30, 1)),sg.Button('Выбрать предмет или добавить')],
-                        [sg.Text('Вопрос:'), sg.Input(key='answer' ,size=(66, None))],
+                        sg.Combo((item),key='item',size=(30, 1)),
+                        sg.Button('Выбрать предмет или добавить')],
+                        [sg.Text('Вопрос:'),
+                        sg.Input(key='answer' ,size=(66, 1))],
                         [sg.Text('Создать ответы')],
-                        [sg.Input(key='answer_1',size=(16, None)),t_p,sg.Input(key='answer_2',size=(16, None)),t_p,sg.Input(key='answer_3',size=(16, None)),t_p,sg.Input(key='answer_4',size=(16, None))],
+                        [sg.Input(key='answer_1',size=(16, 1)),t_p,sg.Input(key='answer_2',
+                        size=(16, 1)),
+                        t_p,
+                        sg.Input(key='answer_3',size=(16, 1)),
+                        t_p,
+                        sg.Input(key='answer_4',size=(16, 1))],
                         [sg.Button('Создать')],
                         [sg.Text('Редактирование ответов:')],
-                        [sg.Text('Неправильный ответ                      '), sg.Text('  Правильный ответ')],
-                        [sg.Combo((question),key='wrong_answer',size=(30, None)), sg.Text('   '),sg.Input(key='ok_answer',size=(25, None)),sg.Button('Редактировать')],
+                        [sg.Text('Неправильный ответ                      '), sg.Text('           Правильный ответ')],
+                        [sg.Combo((question),key='wrong_answer',size=(30, 1)),
+                        sg.Text('   '),
+                        sg.Input(key='ok_answer', size=(25, 1)),
+                        sg.Button('Редактировать')],
                         [sg.Text('Удалить ответ')],
-                        [sg.Combo((delete_question),key='delete_question'),sg.Button('Удалить'), sg.Text('                     '),
+                        [sg.Combo((delete_question),key='delete_question'),
+                        sg.Button('Удалить'),
+                        sg.Text('      '),
+                        sg.B('Вывести всё в xls'),
                         sg.Button('Выход')]
                         ]
         window_main = sg.Window('Test',win_main_lay)
@@ -70,6 +92,8 @@ while True:
                 window_main.FindElement('wrong_answer').Update(values=question)
                 # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
                 window_main.FindElement('delete_question').Update(values=question)
+                item = values_main['item']
+                answer = values_main['answer']
             # НАЖАТИЕ НА КНОПКУ 'Выбрать предмет или добавить'
             if button_main == 'Выбрать предмет или добавить':
                 item = values_main['item']
@@ -128,6 +152,43 @@ while True:
                 window_main.FindElement('wrong_answer').Update(values=question)
                 # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
                 window_main.FindElement('delete_question').Update(values=question)
+            # ЗАПРОС НА СОЗДАНИЕ .XLS ТАБЛИЦЫ СО ВСЕМИ ДАННЫМИ
+            if button_main == 'Вывести всё в xls':
+                cursor.execute("SELECT item FROM items")
+                item = cursor.fetchall()
+                cursor.execute("SELECT question FROM items")
+                question = cursor.fetchall()
+                cursor.execute("SELECT answer FROM items")
+                answer = cursor.fetchall()
+                ws = w.add_sheet(str(f))
+                if os.path.isfile('./items.xls') == True:
+                    f += 1
+                    os.remove('items.xls')
+                    ws.write(0,1, 'Предмет')
+                    ws.write(0,2, 'Вопрос')
+                    ws.write(0,3, 'Ответ')
+                    i = 1
+                    print(item,answer,question)
+                    for ite,answe,questio in list(zip(item,answer,question)):
+                        ws.write(i, 1, ite)
+                        ws.write(i, 2, answe)
+                        ws.write(i, 3, questio)
+                        i += 1
+                    w.save('items.xls')
+                else:
+                    f += 1
+                    ws.write(0,1, 'Предмет')
+                    ws.write(0,2, 'Вопрос')
+                    ws.write(0,3, 'Ответ')
+                    i = 1
+                    print(item,answer,question)
+                    for ite,answe,questio in list(zip(item,answer,question)):
+                        ws.write(i, 1, ite)
+                        ws.write(i, 2, answe)
+                        ws.write(i, 3, questio)
+                        i += 1
+                    w.save('items.xls')
+
             # ЗАПРОС НА УДАЛЕНИЕ ОТВЕТА
             if button_main == 'Удалить':
                 delete_question1 = values_main['delete_question']
