@@ -1,6 +1,7 @@
 import PySimpleGUI as sg
 import sqlite3
 from xlwt import *
+import sys
 import os
 
 # ПЕРЕМЕННЫЕ
@@ -20,6 +21,14 @@ login = [[sg.Text('Пароль?', font='Colibri 15')],
         ]
 
 window_pas = sg.Window('Вход',login)
+
+def request():
+    # ПОИСК ОТВЕТОВ ДЛЯ "Редактирование ответов"
+    cursor.execute("SELECT question FROM items")
+    question = cursor.fetchall()
+    window_main.FindElement('wrong_answer').Update(values=question)
+    # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
+    window_main.FindElement('delete_question').Update(values=question)
 
 while True:
     # Чтение конпок и полей
@@ -48,8 +57,9 @@ while True:
                         [sg.Text('Вопрос:'),
                         sg.Input(key='answer' ,size=(66, 1))],
                         [sg.Text('Создать ответы')],
-                        [sg.Input(key='answer_1',size=(16, 1)),t_p,sg.Input(key='answer_2',
-                        size=(16, 1)),
+                        [sg.Input(key='answer_1',size=(16, 1)),
+                        t_p,
+                        sg.Input(key='answer_2',size=(16, 1)),
                         t_p,
                         sg.Input(key='answer_3',size=(16, 1)),
                         t_p,
@@ -85,13 +95,8 @@ while True:
                 item = cursor.fetchall()
                 # Обновление поля "Выберете предмет или добавте его"
                 window_main.FindElement('item').Update(values=item)
-
-                # ПОИСК ОТВЕТОВ ДЛЯ "неправильного ответа ответов"
-                cursor.execute("SELECT question FROM items")
-                question = cursor.fetchall()
-                window_main.FindElement('wrong_answer').Update(values=question)
-                # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
-                window_main.FindElement('delete_question').Update(values=question)
+                # Вызов функции "request()""
+                request()
                 item = values_main['item']
                 answer = values_main['answer']
             # НАЖАТИЕ НА КНОПКУ 'Выбрать предмет или добавить'
@@ -129,13 +134,8 @@ while True:
                 # ЗАПРОС К БД НА СОЗДАНИЕ ВОПРОСА С ОТВЕТАМИ
                 cursor.executemany("INSERT INTO items VALUES (?,?,?)", (request_answer))
                 conn.commit()
-
-                # ПОИСК ОТВЕТОВ ДЛЯ "Редактирование ответов"
-                cursor.execute("SELECT question FROM items")
-                question = cursor.fetchall()
-                window_main.FindElement('wrong_answer').Update(values=question)
-                # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
-                window_main.FindElement('delete_question').Update(values=question)
+                # Вызов функции "request()"
+                request()
             # НАЖАТИЕ НА КНОПКУ 'Редактировать'
             if button_main == 'Редактировать':
                 # ОПРЕДЕЛЕНИЕ ПЕРЕМЕННЫХ
@@ -145,13 +145,8 @@ while True:
                 request_edit = [str(ok_answer),str(wrong_answer)]
                 cursor.executemany("UPDATE items SET question = (?) WHERE question = (?)",(request_edit,))
                 conn.commit()
-
-                # ПОИСК ОТВЕТОВ ДЛЯ "Редактирование ответов"
-                cursor.execute("SELECT question FROM items")
-                question = cursor.fetchall()
-                window_main.FindElement('wrong_answer').Update(values=question)
-                # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
-                window_main.FindElement('delete_question').Update(values=question)
+                # Вызов функции "request()""
+                request()
             # ЗАПРОС НА СОЗДАНИЕ .XLS ТАБЛИЦЫ СО ВСЕМИ ДАННЫМИ
             if button_main == 'Вывести всё в xls':
                 cursor.execute("SELECT item FROM items")
@@ -195,14 +190,8 @@ while True:
                 request_delete =[str(delete_question1)]
                 cursor.executemany("DELETE FROM items WHERE question = (?)", (request_delete,))
                 conn.commit()
-
-                # ПОИСК ОТВЕТОВ ДЛЯ "Редактирование ответов"
-                cursor.execute("SELECT question FROM items")
-                question = cursor.fetchall()
-                window_main.FindElement('wrong_answer').Update(values=question)
-                # ПОИСК ОТВЕТОВ ДЛЯ ""УДАЛИТЬ"
-                window_main.FindElement('delete_question').Update(values=question)
+                # Вызов функции "request()""
+                request()
             # КНОПКА ВЫХОДА
             if button_main is None or button_main == 'Выход':
-                quit()
-                break
+                sys.exit(0)
