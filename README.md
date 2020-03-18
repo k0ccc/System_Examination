@@ -12,3 +12,4 @@
 #### Для запуска требуется:
 
 * [PySimpleGui](https://github.com/PySimpleGUI/PySimpleGUI)
+* xlwt 
